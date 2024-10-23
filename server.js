@@ -88,12 +88,27 @@ const server = http.createServer((req, res) => {
 
     // Phase 1: GET /dogs
     if (req.method === 'GET' && req.url === '/dogs') {
-      // Your code here
+      const htmlPage = fs.readFileSync('./views/dogs.html', 'utf-8');
+
+      // generate list of dog names
+      const dogsList = dogs.map(dog => `<li>${dog.name}</li>`).join('');
+
+      // replace the #{dogsList} placeholder with the list of dogs
+      const resBody = htmlPage.replace(/#{dogsList}/g, dogsList);
+
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html');
+      res.write(resBody);
+      return res.end();
     }
 
     // Phase 2: GET /dogs/new
     if (req.method === 'GET' && req.url === '/dogs/new') {
-      // Your code here
+      const htmlPage = fs.readFileSync('./views/create-dog.html', 'utf-8')
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html');
+      res.write(htmlPage);
+      return res.end();
     }
 
     // Phase 3: GET /dogs/:dogId
@@ -102,7 +117,28 @@ const server = http.createServer((req, res) => {
       if (urlParts.length === 3) {
         const dogId = urlParts[2];
         const dog = dogs.find(dog => dog.dogId === Number(dogId));
-        // Your code here
+
+        if (dog) {
+          const htmlPage = fs.readFileSync('./views/dog-details.html', 'utf-8');
+
+          // replace placeholders with actual dog data
+          let resBody = htmlPage
+            .replace(/#{name}/g, dog.name)
+            .replace(/#{age}/g, dog.age);
+
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'text/html');
+          res.write(resBody);
+        } else {
+          // handle case where dogID is not found
+          const htmlPage = fs.readFileSync("./views/error.html", "utf-8");
+          const resBody = htmlPage.replace(/#{message}/g, 'Dog Not Found');
+          res.statusCode = 404;
+          res.setHeader("Content-Type", "text/html");
+          res.write(resBody);
+        }
+        return res.end();
+
       }
     }
 
@@ -143,6 +179,6 @@ const server = http.createServer((req, res) => {
   });
 });
 
-const port = 5000;
+const port = 4000;
 
 server.listen(port, () => console.log('Server is listening on port', port));
