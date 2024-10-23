@@ -144,7 +144,21 @@ const server = http.createServer((req, res) => {
 
     // Phase 4: POST /dogs
     if (req.method === 'POST' && req.url === '/dogs') {
-      // Your code here
+      const { name , age } = req.body;
+
+      if (name && age) {
+        const newDog = {
+          dogID: getNewDogId(),
+          name,
+          age: Number(age)
+        }
+
+        dogs.push(newDog);
+        // redirect to the new dog's detail page
+        res.statusCode = 302;
+        res.setHeader('Location', '/dogs/${newDog.dogId}');
+        return res.end();
+      }
     }
 
     // Phase 5: GET /dogs/:dogId/edit
@@ -153,7 +167,30 @@ const server = http.createServer((req, res) => {
       if (urlParts.length === 4 && urlParts[3] === 'edit') {
         const dogId = urlParts[2];
         const dog = dogs.find(dog => dog.dogId === Number(dogId));
-        // Your code here
+
+
+        if (dog) {
+          const htmlPage = fs.readFileSync('./views/edit-dog.html', 'utf-8');
+
+          // replace #{name}, #{age} and {dogID} with actual values
+          let resBody = htmlPage
+            .replace(/#{name}/g, dog.name)
+            .replace(/#{age}/g, dog.age)
+            .replace(/#{dogId}/g, dog.dogId);
+
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'text/html');
+          res.write(resBody);
+        } else {
+          // handle case where dogId is not found
+          const htmlPage = fs.readFileSync('./views/error.html', 'utf-8');
+          const resBody = htmlPage.replace('/#{message'/g, 'Dog Not Found');
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'text/html');
+          res.write(resBody);
+        }
+        return res.end();
+
       }
     }
 
@@ -163,7 +200,28 @@ const server = http.createServer((req, res) => {
       if (urlParts.length === 3) {
         const dogId = urlParts[2];
         const dog = dogs.find(dog => dog.dogId === Number(dogId));
-        // Your code here
+
+        if (dog) {
+          // update dog's name and age from the form data
+          const { name, age } = req.body;
+          if (name && age) {
+            dog.name = name;
+            dog.age = Number(age);
+
+            // redirect to the updated dog's details page
+            res.statusCode = 302;
+            res.setHeader('Location', `/dogs/${dog.dogId}`);
+            return res.end();
+          } else {
+            // handle case where dogId is not found
+            const htmlPage = fs.readFileSync('./views/error.html', 'utf-8')
+            const resBody = htmlPage.replace(/#{message}/g, 'Dog Not Found');
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'text/html');
+            res.write(resBody);
+            return res.end();
+          }
+        }
       }
     }
 
